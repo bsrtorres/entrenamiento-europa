@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#08164a">
+    <title>Entrenamiento – Conexión Europa</title>
+    <style>
+        /* ── Paleta "Conexión Europa": azul noche + oro ── */
+        :root {
+            --eu-950: #040a24;
+            --eu-900: #08164a;
+            --eu-800: #0c2170;
+            --eu-600: #1d44c4;
+            --sky: #8fb0ff;
+            --gold: #ffcc00;
+            --gold-soft: #ffe066;
+            --text: #eef2ff;
+            --text-dim: #a3b0d9;
+            --line: rgba(255, 255, 255, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--eu-950);
+            background-image: radial-gradient(ellipse 90% 60% at 50% 0%, #142a78 0%, var(--eu-950) 70%);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        /* ── Barra superior ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(4, 10, 36, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 1px 0 rgba(255, 204, 0, 0.25);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        .top-bar h1 {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--gold-soft);
+            white-space: nowrap;
+            margin-right: 6px;
+        }
+        .badge {
+            background: rgba(29, 68, 196, 0.25);
+            border: 1px solid rgba(143, 176, 255, 0.4);
+            color: #c9d7ff;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.82em;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .spacer { flex: 1; min-width: 10px; }
+        .speed-label { font-size: 0.82em; color: var(--text-dim); white-space: nowrap; }
+        select#speedSel {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text);
+            padding: 7px 10px;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        select#speedSel:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+        select#speedSel option { background: var(--eu-900); }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.88em;
+            font-weight: 700;
+            transition: transform 0.15s, filter 0.2s, background 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+        .btn:disabled { opacity: 0.35; cursor: default; }
+        .btn-green  { background: linear-gradient(180deg, #34d77e, #1fae5e); color: #fff; }
+        .btn-yellow { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: var(--eu-900); }
+        .btn-red    { background: linear-gradient(180deg, #f2545f, #d93a45); color: #fff; }
+        .btn-ghost  { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+
+        /* ── Zona de imagen ── */
+        .image-area {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(ellipse at 50% 40%, #0c1a52 0%, #01030c 75%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 18px 150px;
+        }
+
+        #cityImg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+            opacity: 0;
+            transition: opacity 0.45s ease;
+            display: none;
+            user-select: none;
+        }
+
+        /* Superposición con el nombre de la ciudad */
+        .city-info {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(1, 3, 12, 0.92) 40%);
+            padding: 60px 24px 20px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.45s ease;
+            pointer-events: none;
+            display: none;
+        }
+        .city-flag    { font-size: 2.8em; line-height: 1; margin-bottom: 4px; }
+        .city-name    {
+            font-size: clamp(2em, 7vh, 4.6em);
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.01em;
+            text-shadow: 0 2px 16px rgba(0,0,0,0.95);
+            line-height: 1.05;
+        }
+        .city-country {
+            display: inline-block;
+            font-size: clamp(0.95em, 2.3vh, 1.4em);
+            color: var(--gold-soft);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 6px;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+        }
+
+        /* Pantalla de espera */
+        .idle-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at 50% 40%, #142a78 0%, var(--eu-950) 75%);
+            gap: 14px;
+            text-align: center;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .idle-screen .big-icon {
+            display: grid;
+            place-items: center;
+            width: 120px;
+            height: 120px;
+            font-size: 4.2em;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(29, 68, 196, 0.45) 0%, rgba(29, 68, 196, 0.05) 70%);
+            border: 2px dashed rgba(255, 204, 0, 0.55);
+            filter: drop-shadow(0 0 24px rgba(29, 68, 196, 0.6));
+        }
+        .idle-screen h2   {
+            font-size: clamp(1.5em, 5vw, 2.2em);
+            font-weight: 800;
+            background: linear-gradient(100deg, #ffffff 0%, var(--gold-soft) 50%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .idle-screen p    { color: var(--text-dim); font-size: 1em; max-width: 480px; line-height: 1.6; }
+        .idle-screen .keys {
+            margin-top: 8px;
+            font-size: 0.82em;
+            color: #7583ad;
+        }
+        .key {
+            display: inline-block;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-bottom-width: 3px;
+            border-radius: 6px;
+            padding: 1px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text);
+            margin: 0 2px;
+        }
+
+        /* ── Barra de progreso del temporizador ── */
+        .timer-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--eu-600), var(--sky) 60%, var(--gold));
+            box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+            width: 0%;
+        }
+
+        /* ── Móvil: foto a todo el ancho ── */
+        @media (max-width: 640px) {
+            .top-bar { padding: 8px 8px; gap: 6px; justify-content: center; }
+            .top-bar h1 { display: none; }
+            .speed-label { display: none; }
+            .spacer { display: none; }
+            select#speedSel { font-size: 0.8em; padding: 8px 6px; }
+            .btn { padding: 9px 11px; font-size: 0.82em; gap: 3px; }
+
+            .image-area { padding: 8px 4px 130px; align-items: center; }
+            #cityImg {
+                width: 100%;
+                height: 100%;
+            }
+            .city-info { padding: 40px 12px 14px; }
+            .city-flag { font-size: 2.2em; }
+            .city-name { font-size: clamp(1.9em, 10vw, 3em); }
+            .idle-screen .big-icon { width: 96px; height: 96px; font-size: 3.4em; }
+            .idle-screen .keys { display: none; }
+        }
+
+        /* Móvil en horizontal: aprovechar la altura para la foto */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .image-area { padding: 6px 6px 90px; }
+            .city-info { padding: 30px 12px 8px; }
+            .city-flag { display: none; }
+            .city-name { font-size: 1.8em; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Barra superior ── -->
+<div class="top-bar">
+    <h1>🎓 Entrenamiento – Conexión Europa</h1>
+    <span class="badge" id="cityCounter">— / 16</span>
+    <span class="badge" id="roundBadge">Ronda 1</span>
+    <div class="spacer"></div>
+    <label class="speed-label" for="speedSel">Velocidad:</label>
+    <select id="speedSel" onchange="changeSpeed()">
+        <option value="2000">Rápida (2 s)</option>
+        <option value="3500" selected>Normale (3,5 s)</option>
+        <option value="5000">Lenta (5 s)</option>
+        <option value="8000">Muy lenta (8 s)</option>
+    </select>
+    <button class="btn btn-green"  id="btnStart" onclick="startOrResume()">▶ Iniciar</button>
+    <button class="btn btn-yellow" id="btnPause" onclick="togglePause()" disabled>⏸ Pausa</button>
+    <button class="btn btn-red"    id="btnStop"  onclick="stopTraining()"  disabled>⏹ Detener</button>
+    <a href="entrenamiento_it.html" class="btn btn-ghost" title="Versione italiana">🇮🇹 IT</a>
+    <a href="index.html" class="btn btn-ghost">☰ Menú</a>
+</div>
+
+<!-- ── Zona de imagen ── -->
+<div class="image-area">
+
+    <div class="idle-screen" id="idleScreen">
+        <div class="big-icon">🌍</div>
+        <h2>Entrenamiento — Conexión Europa</h2>
+        <p>Repasa las 16 capitales europeas antes del juego. Aparecerán de forma aleatoria con el nombre y la bandera de cada país.</p>
+        <p class="keys">
+            Atajos: <span class="key">Espacio</span> Iniciar / Pausa &nbsp;
+            <span class="key">→</span> Siguiente &nbsp;
+            <span class="key">Esc</span> Detener
+        </p>
+    </div>
+
+    <img id="cityImg" src="" alt="Ciudad europea">
+
+    <div class="city-info" id="cityInfo">
+        <div class="city-flag"    id="cityFlag"></div>
+        <div class="city-name"    id="cityName"></div>
+        <div class="city-country" id="cityCountry"></div>
+    </div>
+
+</div>
+
+<!-- ── Barra de cuenta atrás ── -->
+<div class="timer-bar">
+    <div class="timer-fill" id="timerFill"></div>
+</div>
+
+<script>
+const CITIES = {
+    1:  { name: 'Madrid',    flag: '🇪🇸', country: 'España' },
+    2:  { name: 'Roma',      flag: '🇮🇹', country: 'Italia' },
+    3:  { name: 'París',    flag: '🇫🇷', country: 'Francia' },
+    4:  { name: 'Atenas',     flag: '🇬🇷', country: 'Grecia' },
+    5:  { name: 'Oslo',      flag: '🇳🇴', country: 'Noruega' },
+    6:  { name: 'Lisboa',   flag: '🇵🇹', country: 'Portugal' },
+    7:  { name: 'Londres',    flag: '🇬🇧', country: 'Reino Unido' },
+    8:  { name: 'Dublín',   flag: '🇮🇪', country: 'Irlanda' },
+    9:  { name: 'Berlín',   flag: '🇩🇪', country: 'Alemania' },
+    10: { name: 'Varsovia',  flag: '🇵🇱', country: 'Polonia' },
+    11: { name: 'Helsinki',  flag: '🇫🇮', country: 'Finlandia' },
+    12: { name: 'Estocolmo', flag: '🇸🇪', country: 'Suecia' },
+    13: { name: 'Reykjavík', flag: '🇮🇸', country: 'Islandia' },
+    14: { name: 'Sofía',     flag: '🇧🇬', country: 'Bulgaria' },
+    15: { name: 'Viena',    flag: '🇦🇹', country: 'Austria' },
+    16: { name: 'Berna',     flag: '🇨🇭', country: 'Suiza' }
+};
+const IMG_BASE = '';
+const FOLDERS  = ['img/ciudades/set1', 'img/ciudades/set2', 'img/ciudades/set3'];
+
+let queue    = [];
+let pos      = 0;
+let round    = 1;
+let timer    = null;
+let paused   = false;
+let running  = false;
+let interval = 4000;
+
+// ── Utilidades ──────────────────────────────────────────────────────────────
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function buildQueue() {
+    return shuffle(Object.keys(CITIES).map(Number));
+}
+
+// ── Mostrar ciudad ────────────────────────────────────────────────────────────
+function show(cityId) {
+    const city   = CITIES[cityId];
+    const folder = FOLDERS[Math.floor(Math.random() * FOLDERS.length)];
+    const img    = document.getElementById('cityImg');
+    const info   = document.getElementById('cityInfo');
+    const newSrc = `${IMG_BASE}${folder}/imagen${cityId}.jpg`;
+
+    img.style.opacity  = '0';
+    info.style.opacity = '0';
+
+    const waitFade = new Promise(res => setTimeout(res, 450));
+    const waitLoad = new Promise(res => {
+        const preload = new Image();
+        preload.onload  = res;
+        preload.onerror = res;
+        preload.src = newSrc;
+    });
+
+    Promise.all([waitFade, waitLoad]).then(() => {
+        img.src = newSrc;
+        document.getElementById('cityFlag').textContent    = city.flag;
+        document.getElementById('cityName').textContent    = city.name;
+        document.getElementById('cityCountry').textContent = city.country;
+        img.style.opacity  = '1';
+        info.style.opacity = '1';
+    });
+
+    document.getElementById('cityCounter').textContent = `${pos + 1} / ${queue.length}`;
+    document.getElementById('roundBadge').textContent  = `Ronda ${round}`;
+
+    animateBar();
+}
+
+// ── Barra de progreso ─────────────────────────────────────────────────────────
+function animateBar() {
+    const fill = document.getElementById('timerFill');
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    fill.offsetWidth;
+    fill.style.transition = `width ${interval}ms linear`;
+    fill.style.width = '100%';
+}
+
+function freezeBar() {
+    const fill   = document.getElementById('timerFill');
+    const parent = fill.parentElement;
+    const pct    = (fill.getBoundingClientRect().width / parent.getBoundingClientRect().width) * 100;
+    fill.style.transition = 'none';
+    fill.style.width = pct.toFixed(1) + '%';
+}
+
+function resetBar() {
+    const fill = document.getElementById('timerFill');
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+}
+
+// ── Control del juego ─────────────────────────────────────────────────────────
+function tick() {
+    pos++;
+    if (pos >= queue.length) {
+        round++;
+        pos = 0;
+        queue = buildQueue();
+    }
+    show(queue[pos]);
+}
+
+function startOrResume() {
+    if (running && paused) {
+        paused = false;
+        document.getElementById('btnPause').textContent = '⏸ Pausa';
+        document.getElementById('btnStart').disabled    = true;
+        document.getElementById('btnStart').textContent = '▶ Iniciar';
+        timer = setInterval(tick, interval);
+        animateBar();
+        return;
+    }
+
+    round = 1; pos = 0;
+    running = true; paused = false;
+    queue = buildQueue();
+
+    document.getElementById('idleScreen').style.display = 'none';
+    document.getElementById('cityImg').style.display    = 'block';
+    document.getElementById('cityInfo').style.display   = 'block';
+
+    document.getElementById('btnStart').disabled  = true;
+    document.getElementById('btnPause').disabled  = false;
+    document.getElementById('btnStop').disabled   = false;
+    document.getElementById('speedSel').disabled  = true;
+
+    show(queue[pos]);
+    timer = setInterval(tick, interval);
+}
+
+function togglePause() {
+    if (!running) return;
+
+    if (!paused) {
+        paused = true;
+        clearInterval(timer); timer = null;
+        freezeBar();
+        document.getElementById('btnPause').textContent = '▶ Reanudar';
+        document.getElementById('btnStart').disabled    = false;
+        document.getElementById('btnStart').textContent = '▶ Reanudar';
+    } else {
+        paused = false;
+        document.getElementById('btnPause').textContent = '⏸ Pausa';
+        document.getElementById('btnStart').disabled    = true;
+        document.getElementById('btnStart').textContent = '▶ Iniciar';
+        timer = setInterval(tick, interval);
+        animateBar();
+    }
+}
+
+function stopTraining() {
+    running = false; paused = false;
+    clearInterval(timer); timer = null;
+
+    const img  = document.getElementById('cityImg');
+    const info = document.getElementById('cityInfo');
+    img.style.opacity  = '0';
+    info.style.opacity = '0';
+    resetBar();
+
+    setTimeout(() => {
+        img.style.display  = 'none';
+        info.style.display = 'none';
+        document.getElementById('idleScreen').style.display = 'flex';
+    }, 460);
+
+    document.getElementById('btnStart').disabled  = false;
+    document.getElementById('btnStart').textContent = '▶ Iniciar';
+    document.getElementById('btnPause').disabled  = true;
+    document.getElementById('btnPause').textContent = '⏸ Pausa';
+    document.getElementById('btnStop').disabled   = true;
+    document.getElementById('speedSel').disabled  = false;
+    document.getElementById('cityCounter').textContent = '— / 16';
+    document.getElementById('roundBadge').textContent  = 'Ronda 1';
+}
+
+function skipNext() {
+    if (!running || paused) return;
+    clearInterval(timer);
+    tick();
+    timer = setInterval(tick, interval);
+}
+
+function changeSpeed() {
+    interval = parseInt(document.getElementById('speedSel').value);
+    if (running && !paused) {
+        clearInterval(timer);
+        timer = setInterval(tick, interval);
+        animateBar();
+    }
+}
+
+// ── Teclado ───────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if (e.key === ' ') {
+        e.preventDefault();
+        if (!running) startOrResume();
+        else          togglePause();
+    }
+    if (e.key === 'Escape')     stopTraining();
+    if (e.key === 'ArrowRight') skipNext();
+});
+</script>
+</body>
+</html>
